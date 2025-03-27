@@ -3,16 +3,18 @@ import React from 'react';
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from './ui/chart';
 
-interface TopicChartProps {
+export interface TopicChartProps {
   data: { timestamp: string; popularity: number }[];
   className?: string;
   height?: number;
+  showLabels?: boolean;
 }
 
 const TopicChart: React.FC<TopicChartProps> = ({ 
   data, 
   className = "",
-  height = 80
+  height = 80,
+  showLabels = false
 }) => {
   // Format data for display
   const formattedData = data.map(item => ({
@@ -47,15 +49,15 @@ const TopicChart: React.FC<TopicChartProps> = ({
               dataKey="date" 
               axisLine={false}
               tickLine={false}
-              tick={false}
-              height={0}
+              tick={showLabels}
+              height={showLabels ? 20 : 0}
             />
             <YAxis 
               domain={[min - padding, max + padding]}
               axisLine={false}
               tickLine={false}
-              tick={false}
-              width={0}
+              tick={showLabels}
+              width={showLabels ? 30 : 0}
             />
             <ChartTooltip 
               content={({ active, payload }) => {

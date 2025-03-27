@@ -112,33 +112,35 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
 
       setTopics(typedTopics);
 
+      // Generate mock portfolio value even if no user is logged in
+      generateDailyActivityData();
+      generateTopicPopularityHistory(typedTopics);
+      calculatePortfolioMetrics([]);
+
       // Fetch user progress if logged in
       if (user) {
-        const { data: progressData, error: progressError } = await supabase
-          .from('user_progress')
-          .select('*')
-          .eq('user_id', user.id);
+        try {
+          const { data: progressData, error: progressError } = await supabase
+            .from('user_progress')
+            .select('*')
+            .eq('user_id', user.id);
 
-        if (progressError) {
-          throw progressError;
+          if (progressError) {
+            console.error('Error fetching user progress:', progressError);
+          } else if (progressData) {
+            // Convert to proper UserProgress type with explicit status field
+            const typedProgress: UserProgress[] = progressData.map(progress => ({
+              ...progress,
+              status: progress.status as 'not_started' | 'in_progress' | 'completed'
+            }));
+
+            setUserProgress(typedProgress);
+            // Update portfolio metrics with user progress
+            calculatePortfolioMetrics(typedProgress);
+          }
+        } catch (progressErr) {
+          console.error('Failed to process user progress:', progressErr);
         }
-
-        // Convert to proper UserProgress type with explicit status field
-        const typedProgress: UserProgress[] = progressData?.map(progress => ({
-          ...progress,
-          status: progress.status as 'not_started' | 'in_progress' | 'completed'
-        })) || [];
-
-        setUserProgress(typedProgress);
-
-        // Generate mock portfolio value based on user progress
-        calculatePortfolioMetrics(typedProgress);
-
-        // Generate mock daily activity data
-        generateDailyActivityData();
-
-        // Generate mock topic popularity history
-        generateTopicPopularityHistory(typedTopics);
       }
     } catch (err) {
       console.error('Error loading topics:', err);
@@ -177,7 +179,7 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
     
     const value = baseValue + completedBonus + inProgressBonus + percentBonus;
     const change = Math.floor(Math.random() * 200) - 50; // Random change between -50 and 150
-    const changePercent = Math.round((change / (value - change)) * 100 * 10) / 10;
+    const changePercent = Math.round((change / (value - change || 1)) * 100 * 10) / 10;
     
     setPortfolioValue(value);
     setPortfolioChange(change);
