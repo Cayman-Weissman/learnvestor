@@ -14,7 +14,7 @@ const Index: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-[#0A0A0A] text-white">
       <InteractiveDotBackground />
       
-      <header className="w-full p-6 flex justify-between items-center">
+      <header className="w-full p-6 flex justify-between items-center relative z-10">
         <div className="flex items-center gap-2">
           <Book className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-primary">Luminate</h1>
@@ -29,7 +29,7 @@ const Index: React.FC = () => {
         </Button>
       </header>
 
-      <main className="flex-grow flex flex-col items-center justify-center px-6 py-12 text-center">
+      <main className="flex-grow flex flex-col items-center justify-center px-6 py-12 text-center relative z-10">
         <div className="max-w-3xl mx-auto animate-fade-in">
           <h2 className="text-4xl md:text-6xl font-bold mb-4">
             <span className="text-white">Investing in </span>
@@ -52,7 +52,7 @@ const Index: React.FC = () => {
             
             <Button 
               variant="outline" 
-              className="border-white/20 text-white hover:bg-white/10 px-8 py-6 rounded-lg text-lg"
+              className="border-white/20 bg-black/40 text-white hover:bg-white/10 px-8 py-6 rounded-lg text-lg"
               onClick={() => navigate('/login')}
             >
               Log In
@@ -93,7 +93,7 @@ const Index: React.FC = () => {
         </div>
       </main>
       
-      <footer className="py-8 text-center text-gray-500 text-sm">
+      <footer className="py-8 text-center text-gray-500 text-sm relative z-10">
         <p>© 2023 Luminate. All rights reserved.</p>
       </footer>
     </div>

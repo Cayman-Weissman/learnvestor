@@ -57,7 +57,7 @@ const Login: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-[#0A0A0A] text-white">
       <InteractiveDotBackground />
       
-      <header className="w-full p-6 flex justify-between items-center">
+      <header className="w-full p-6 flex justify-between items-center relative z-10">
         <div className="flex items-center gap-2">
           <Book className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-primary">Luminate</h1>
@@ -71,7 +71,7 @@ const Login: React.FC = () => {
         </Button>
       </header>
 
-      <div className="flex flex-col items-center justify-center flex-grow px-6">
+      <div className="flex flex-col items-center justify-center flex-grow px-6 relative z-10">
         <div className="w-full max-w-md p-8 glass-card rounded-xl animate-fade-in">
           <h2 className="text-2xl font-semibold text-center mb-8">Log in</h2>
           
@@ -94,7 +94,7 @@ const Login: React.FC = () => {
               <div className="w-full border-t border-white/20"></div>
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-card text-gray-400">or</span>
+              <span className="px-2 bg-black/30 text-gray-400">or</span>
             </div>
           </div>
           
@@ -140,11 +140,9 @@ const Login: React.FC = () => {
               <div className="text-gray-400">
                 Need an account? <a href="/signup" className="text-primary hover:underline">Sign up</a>
               </div>
-              <div>
-                <a href="#" className="text-primary hover:underline">
-                  Forgot password?
-                </a>
-              </div>
+              <a href="#" className="text-primary hover:underline">
+                Forgot password?
+              </a>
             </div>
             
             <Button
