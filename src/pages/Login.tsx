@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/components/ui/use-toast';
+import InteractiveDotBackground from '@/components/InteractiveDotBackground';
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -53,15 +54,17 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0A0A] dot-pattern text-white">
+    <div className="min-h-screen flex flex-col bg-[#0A0A0A] text-white">
+      <InteractiveDotBackground />
+      
       <header className="w-full p-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Book className="w-8 h-8 text-primary" />
           <h1 className="text-3xl font-bold text-primary">Luminate</h1>
         </div>
         <Button 
-          variant="ghost" 
-          className="text-white hover:text-primary hover:bg-transparent"
+          variant="outline" 
+          className="border-white/20 text-white hover:bg-white/10 hover:text-primary"
           onClick={() => navigate('/')}
         >
           Home
@@ -133,13 +136,15 @@ const Login: React.FC = () => {
               </div>
             </div>
             
-            <div className="flex items-center justify-between text-sm mt-2">
-              <p className="text-gray-400">
+            <div className="flex flex-col gap-2 text-sm mt-2">
+              <div className="text-gray-400">
                 Need an account? <a href="/signup" className="text-primary hover:underline">Sign up</a>
-              </p>
-              <a href="#" className="text-primary hover:underline">
-                Forgot password?
-              </a>
+              </div>
+              <div>
+                <a href="#" className="text-primary hover:underline">
+                  Forgot password?
+                </a>
+              </div>
             </div>
             
             <Button

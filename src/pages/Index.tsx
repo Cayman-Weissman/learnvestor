@@ -4,13 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Book, Brain, BarChart2, UsersRound } from 'lucide-react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
+import InteractiveDotBackground from '@/components/InteractiveDotBackground';
 
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#0A0A0A] dot-pattern text-white">
+    <div className="min-h-screen flex flex-col bg-[#0A0A0A] text-white">
+      <InteractiveDotBackground />
+      
       <header className="w-full p-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Book className="w-8 h-8 text-primary" />
@@ -18,8 +21,8 @@ const Index: React.FC = () => {
         </div>
         
         <Button 
-          variant="ghost" 
-          className="text-white hover:text-primary hover:bg-transparent"
+          variant="outline" 
+          className="border-white/20 text-white hover:bg-white/10 hover:text-primary"
           onClick={() => navigate(isAuthenticated ? '/dashboard' : '/login')}
         >
           {isAuthenticated ? 'Dashboard' : 'Login'}

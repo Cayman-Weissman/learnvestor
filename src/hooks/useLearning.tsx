@@ -110,7 +110,9 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
       setTopics(topicsData as Topic[]);
       
       // Load popularity history for all topics
-      await loadPopularityHistory(topicsData.map(t => t.id));
+      if (topicsData && topicsData.length > 0) {
+        await loadPopularityHistory(topicsData.map(t => t.id));
+      }
       
       if (user) {
         // Load user progress from Supabase if user is logged in

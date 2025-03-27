@@ -66,25 +66,40 @@ const InteractiveDotBackground: React.FC = () => {
           Math.pow(mousePosition.current.y - point.y, 2)
         );
         
-        // Influence radius - how far from cursor the effect reaches
-        const influenceRadius = 150;
+        // Increase influence radius for more visible effect
+        const influenceRadius = 200;
         
         if (distance < influenceRadius) {
           // Calculate intensity based on distance (closer = more intense)
           const intensity = 1 - (distance / influenceRadius);
           
           // Enhance size and opacity based on distance from cursor
-          point.size = point.originalSize + (intensity * 2);
-          point.opacity = point.originalOpacity + (intensity * 0.5);
+          point.size = point.originalSize + (intensity * 4); // Increased size factor
+          point.opacity = point.originalOpacity + (intensity * 0.8); // Increased opacity
         } else {
           // Reset to original values with smooth transition
           point.size = point.originalSize + (point.size - point.originalSize) * 0.9;
           point.opacity = point.originalOpacity + (point.opacity - point.originalOpacity) * 0.9;
         }
         
+        // Draw the point with a subtle glow effect
+        const gradient = ctx.createRadialGradient(
+          point.x, point.y, 0,
+          point.x, point.y, point.size * 2
+        );
+        
+        gradient.addColorStop(0, `rgba(255, 255, 255, ${point.opacity})`);
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        
         ctx.beginPath();
+        ctx.fillStyle = gradient;
+        ctx.arc(point.x, point.y, point.size * 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw the core of the point
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255, 255, 255, ${point.opacity * 1.5})`;
         ctx.arc(point.x, point.y, point.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(255, 255, 255, ${point.opacity})`;
         ctx.fill();
       });
       
