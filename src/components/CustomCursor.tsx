@@ -38,6 +38,16 @@ const CustomCursor: React.FC = () => {
       style={{ 
         left: `${position.x}px`,
         top: `${position.y}px`,
+        width: isExpanded ? '40px' : '20px',
+        height: isExpanded ? '40px' : '20px',
+        borderRadius: '50%',
+        background: 'transparent',
+        border: '2px solid rgba(255, 255, 255, 0.4)',
+        pointerEvents: 'none',
+        position: 'fixed',
+        transform: 'translate(-50%, -50%)',
+        zIndex: 9999,
+        mixBlendMode: 'difference',
         transition: 'width 0.2s, height 0.2s, background-color 0.2s',
       }}
     />

@@ -9,7 +9,165 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      content_sections: {
+        Row: {
+          content: string
+          duration: number
+          id: string
+          order_index: number
+          title: string
+          topic_id: string
+          type: string
+        }
+        Insert: {
+          content: string
+          duration: number
+          id?: string
+          order_index: number
+          title: string
+          topic_id: string
+          type: string
+        }
+        Update: {
+          content?: string
+          duration?: number
+          id?: string
+          order_index?: number
+          title?: string
+          topic_id?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "content_sections_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topic_popularity_history: {
+        Row: {
+          id: string
+          popularity: number
+          timestamp: string
+          topic_id: string
+        }
+        Insert: {
+          id?: string
+          popularity: number
+          timestamp?: string
+          topic_id: string
+        }
+        Update: {
+          id?: string
+          popularity?: number
+          timestamp?: string
+          topic_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "topic_popularity_history_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      topics: {
+        Row: {
+          category: string
+          created_at: string
+          description: string
+          difficulty: string
+          id: string
+          popularity: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description: string
+          difficulty: string
+          id?: string
+          popularity?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string
+          difficulty?: string
+          id?: string
+          popularity?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_activity: {
+        Row: {
+          activity_value: number
+          day: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          activity_value?: number
+          day?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          activity_value?: number
+          day?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_progress: {
+        Row: {
+          id: string
+          last_accessed: string
+          percent_complete: number
+          status: string
+          time_spent: number
+          topic_id: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          last_accessed?: string
+          percent_complete?: number
+          status: string
+          time_spent?: number
+          topic_id: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          last_accessed?: string
+          percent_complete?: number
+          status?: string
+          time_spent?: number
+          topic_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_progress_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

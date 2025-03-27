@@ -18,28 +18,28 @@ import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
-
-// Mock content generated "by AI" for the topic
-interface ContentSection {
-  id: string;
-  title: string;
-  type: 'text' | 'video' | 'quiz' | 'exercise';
-  content: string;
-  duration: number; // minutes
-}
+import TopicChart from '@/components/TopicChart';
+import InteractiveDotBackground from '@/components/InteractiveDotBackground';
 
 const TopicDetail: React.FC = () => {
   const { topicId } = useParams<{ topicId: string }>();
   const navigate = useNavigate();
-  const { getTopicById, getProgressForTopic, updateProgress } = useLearning();
+  const { 
+    getTopicById, 
+    getProgressForTopic, 
+    updateProgress, 
+    loadContentSections,
+    topicPopularityHistory
+  } = useLearning();
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [activeUsers, setActiveUsers] = useState<number>(Math.floor(Math.random() * 200) + 50);
-  const [sections, setSections] = useState<ContentSection[]>([]);
+  const [sections, setSections] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   const topic = topicId ? getTopicById(topicId) : undefined;
   const progress = topicId ? getProgressForTopic(topicId) : undefined;
+  const historyData = topicId && topicPopularityHistory[topicId] ? topicPopularityHistory[topicId] : [];
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -52,64 +52,35 @@ const TopicDetail: React.FC = () => {
       return;
     }
 
-    // Simulate loading AI-generated content
     setIsLoading(true);
     
-    const timer = setTimeout(() => {
-      // Mock AI-generated sections based on topic
-      const mockSections: ContentSection[] = [
-        {
-          id: 's1',
-          title: `Introduction to ${topic.title}`,
-          type: 'text',
-          content: `This comprehensive introduction will guide you through the fundamental concepts of ${topic.title.toLowerCase()}. We'll explore the key principles and applications that make this subject relevant in today's world.`,
-          duration: 10
-        },
-        {
-          id: 's2',
-          title: 'Core Concepts',
-          type: 'text',
-          content: `In this section, we'll dive deeper into the essential frameworks and methodologies that form the backbone of ${topic.title.toLowerCase()}. You'll gain a solid understanding of how these concepts interrelate and build upon each other.`,
-          duration: 15
-        },
-        {
-          id: 's3',
-          title: 'Practical Application',
-          type: 'exercise',
-          content: `Now it's time to apply what you've learned. This hands-on exercise will challenge you to solve real-world problems using the knowledge you've gained so far.`,
-          duration: 20
-        },
-        {
-          id: 's4',
-          title: 'Advanced Techniques',
-          type: 'video',
-          content: `Watch this comprehensive video tutorial that demonstrates advanced techniques in ${topic.title.toLowerCase()}. These methods will help you tackle complex challenges more effectively.`,
-          duration: 18
-        },
-        {
-          id: 's5',
-          title: 'Knowledge Check',
-          type: 'quiz',
-          content: `Test your understanding with this quiz covering the key concepts we've explored. This will help reinforce your learning and identify any areas that might need additional review.`,
-          duration: 12
+    const loadSections = async () => {
+      try {
+        const contentSections = await loadContentSections(topic.id);
+        setSections(contentSections);
+        
+        // If no progress exists yet, create initial progress entry
+        if (!progress) {
+          await updateProgress(topic.id, {
+            status: 'in_progress',
+            percent_complete: 0,
+            time_spent: 0
+          });
         }
-      ];
-      
-      setSections(mockSections);
-      setIsLoading(false);
-      
-      // If no progress exists yet, create initial progress entry
-      if (!progress) {
-        updateProgress(topic.id, {
-          status: 'in_progress',
-          percentComplete: 0,
-          timeSpent: 0
+      } catch (error) {
+        console.error('Error loading content:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load content. Please try again.',
+          variant: 'destructive'
         });
+      } finally {
+        setIsLoading(false);
       }
-    }, 1500);
+    };
     
-    return () => clearTimeout(timer);
-  }, [topic, isAuthenticated, navigate, progress, updateProgress]);
+    loadSections();
+  }, [topic, isAuthenticated, navigate, progress, updateProgress, loadContentSections]);
 
   const startLearning = async () => {
     if (!topic) return;
@@ -117,8 +88,8 @@ const TopicDetail: React.FC = () => {
     try {
       await updateProgress(topic.id, {
         status: 'in_progress',
-        percentComplete: progress?.percentComplete || 5,
-        timeSpent: (progress?.timeSpent || 0) + 5
+        percent_complete: progress?.percent_complete || 5,
+        time_spent: 5
       });
       
       toast({
@@ -139,7 +110,9 @@ const TopicDetail: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] dot-pattern text-white">
+    <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <InteractiveDotBackground />
+      
       <header className="sticky top-0 z-10 backdrop-blur-md bg-black/60 border-b border-white/10">
         <div className="max-w-6xl mx-auto px-4 md:px-6 py-4 flex justify-between items-center">
           <button 
@@ -187,7 +160,7 @@ const TopicDetail: React.FC = () => {
               <span className="text-gray-400 text-sm mb-1">Estimated Time</span>
               <div className="flex items-center">
                 <Clock size={16} className="text-primary mr-2" />
-                <span>75 minutes</span>
+                <span>{sections.reduce((acc, s) => acc + s.duration, 0)} minutes</span>
               </div>
             </div>
             
@@ -195,7 +168,7 @@ const TopicDetail: React.FC = () => {
               <span className="text-gray-400 text-sm mb-1">Last Updated</span>
               <div className="flex items-center">
                 <Calendar size={16} className="text-primary mr-2" />
-                <span>{new Date(topic.updatedAt).toLocaleDateString()}</span>
+                <span>{new Date(topic.updated_at).toLocaleDateString()}</span>
               </div>
             </div>
             
@@ -212,9 +185,9 @@ const TopicDetail: React.FC = () => {
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-sm text-gray-400">Your Progress</span>
-                <span className="text-sm font-medium">{progress.percentComplete}%</span>
+                <span className="text-sm font-medium">{progress.percent_complete}%</span>
               </div>
-              <Progress value={progress.percentComplete} className="h-2 bg-gray-700" />
+              <Progress value={progress.percent_complete} className="h-2 bg-gray-700" />
             </div>
           ) : null}
           
@@ -228,7 +201,7 @@ const TopicDetail: React.FC = () => {
               className="bg-primary hover:bg-primary/90 text-white"
               onClick={startLearning}
             >
-              {progress?.percentComplete ? 'Continue Learning' : 'Start Learning'}
+              {progress?.percent_complete ? 'Continue Learning' : 'Start Learning'}
             </Button>
           </div>
         </div>
@@ -281,9 +254,21 @@ const TopicDetail: React.FC = () => {
               There are currently <span className="text-primary font-medium">{activeUsers}</span> active learners studying this topic.
             </p>
             
+            {historyData.length > 0 && (
+              <TopicChart 
+                data={historyData}
+                height={180}
+                className="mb-4"
+              />
+            )}
+            
             <div className="flex justify-between items-center">
               <span className="text-sm text-gray-500">Interest over time</span>
-              <span className="text-primary font-medium">+{topic.popularity - 750}</span>
+              <span className="text-primary font-medium">
+                +{historyData.length > 0 
+                  ? historyData[historyData.length - 1].popularity - historyData[0].popularity 
+                  : topic.popularity - 750}
+              </span>
             </div>
           </div>
         </section>

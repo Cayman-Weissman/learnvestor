@@ -18,6 +18,9 @@ import { useLearning } from '@/hooks/useLearning';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
+import TopicChart from '@/components/TopicChart';
+import InteractiveDotBackground from '@/components/InteractiveDotBackground';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -25,11 +28,13 @@ const Dashboard: React.FC = () => {
   const { 
     topics, 
     userProgress, 
+    topicPopularityHistory,
     portfolioValue, 
     portfolioChange, 
     portfolioChangePercent,
     dailyActivity,
-    loadTopics
+    loadTopics,
+    isLoading
   } = useLearning();
 
   useEffect(() => {
@@ -63,7 +68,9 @@ const Dashboard: React.FC = () => {
   const topicCounts = getTopicCounts();
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] dot-pattern text-white">
+    <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <InteractiveDotBackground />
+      
       <header className="w-full p-4 md:p-6 flex justify-between items-center">
         <div className="flex items-center gap-2">
           <Book className="w-6 h-6 md:w-8 md:h-8 text-primary" />
@@ -115,47 +122,54 @@ const Dashboard: React.FC = () => {
           </div>
           
           <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={dailyActivity}>
-                <defs>
-                  <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <XAxis 
-                  dataKey="day" 
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#6b7280', fontSize: 12 }}
-                />
-                <YAxis 
-                  domain={[0, 'dataMax + 200']}
-                  axisLine={false}
-                  tickLine={false}
-                  tick={{ fill: '#6b7280', fontSize: 12 }}
-                />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: '#1c1c2e', 
-                    border: 'none', 
-                    borderRadius: '0.5rem',
-                    color: 'white',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.5)'
-                  }}
-                  labelStyle={{ color: 'white', fontWeight: 'bold' }}
-                  itemStyle={{ color: '#3b82f6' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="value" 
-                  stroke="#3b82f6" 
-                  strokeWidth={2}
-                  fillOpacity={1} 
-                  fill="url(#colorValue)" 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <ChartContainer
+              config={{
+                value: {
+                  color: '#3b82f6'
+                }
+              }}
+            >
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={dailyActivity}>
+                  <defs>
+                    <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.8} />
+                      <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <XAxis 
+                    dataKey="day" 
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                  />
+                  <YAxis 
+                    domain={[0, 'dataMax + 200']}
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                  />
+                  <ChartTooltip 
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <ChartTooltipContent payload={payload} />
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Area 
+                    type="monotone" 
+                    dataKey="value" 
+                    stroke="#3b82f6" 
+                    strokeWidth={2}
+                    fillOpacity={1} 
+                    fill="url(#colorValue)" 
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </ChartContainer>
           </div>
         </section>
 
@@ -203,10 +217,26 @@ const Dashboard: React.FC = () => {
             <a href="#" className="text-primary hover:underline text-sm">View All</a>
           </div>
           
-          {topics.length > 0 ? (
+          {isLoading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="glass-card rounded-xl p-4 animate-pulse">
+                  <div className="h-5 bg-gray-800 rounded mb-2 w-3/4"></div>
+                  <div className="h-4 bg-gray-800 rounded mb-3 w-full"></div>
+                  <div className="h-20 bg-gray-800 rounded mb-2 w-full"></div>
+                  <div className="flex justify-between">
+                    <div className="h-3 bg-gray-800 rounded w-1/4"></div>
+                    <div className="h-3 bg-gray-800 rounded w-1/4"></div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : topics.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {topics.map((topic) => {
-                const progress = userProgress.find(p => p.topicId === topic.id);
+                const progress = userProgress.find(p => p.topic_id === topic.id);
+                const historyData = topicPopularityHistory[topic.id] || [];
+                
                 return (
                   <div 
                     key={topic.id}
@@ -220,11 +250,19 @@ const Dashboard: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-sm text-gray-400 mb-3 line-clamp-2">{topic.description}</p>
+                    
+                    {historyData.length > 0 && (
+                      <TopicChart 
+                        data={historyData}
+                        className="mb-2"
+                      />
+                    )}
+                    
                     <div className="flex justify-between items-center">
                       <span className="text-xs text-gray-500">{topic.category}</span>
                       <div className="flex items-center">
                         <span className="text-xs text-gray-400 mr-2">
-                          {progress ? `${progress.percentComplete}% complete` : 'Not started'}
+                          {progress ? `${progress.percent_complete}% complete` : 'Not started'}
                         </span>
                         <span className="text-primary font-medium">{topic.popularity}</span>
                       </div>
