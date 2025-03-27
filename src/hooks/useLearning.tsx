@@ -38,6 +38,18 @@ export type UserProgress = {
   time_spent: number;
 };
 
+// Daily activity data type
+export type DailyActivity = {
+  day: string;
+  value: number;
+};
+
+// Topic popularity history entry
+export type PopularityHistoryEntry = {
+  timestamp: string;
+  popularity: number;
+};
+
 // Define types for the LearningContext
 type LearningContextType = {
   topics: Topic[];
@@ -50,6 +62,12 @@ type LearningContextType = {
   updateUserProgress: (progressData: Partial<UserProgress>) => Promise<void>;
   getTopicById: (id: string) => Topic | undefined;
   getUserProgressForTopic: (topicId: string) => UserProgress | undefined;
+  topicPopularityHistory: Record<string, PopularityHistoryEntry[]>;
+  portfolioValue: number;
+  portfolioChange: number;
+  portfolioChangePercent: number;
+  dailyActivity: DailyActivity[];
+  loadTopics: () => Promise<void>;
 };
 
 // Create context with default values
@@ -62,6 +80,12 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
   const [userProgress, setUserProgress] = useState<UserProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [topicPopularityHistory, setTopicPopularityHistory] = useState<Record<string, PopularityHistoryEntry[]>>({});
+  const [portfolioValue, setPortfolioValue] = useState<number>(0);
+  const [portfolioChange, setPortfolioChange] = useState<number>(0);
+  const [portfolioChangePercent, setPortfolioChangePercent] = useState<number>(0);
+  const [dailyActivity, setDailyActivity] = useState<DailyActivity[]>([]);
+  
   const { user } = useAuth();
 
   // Function to fetch topics from Supabase
@@ -80,7 +104,13 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
         throw topicsError;
       }
 
-      setTopics(topicsData || []);
+      // Convert to proper Topic type with explicit difficulty field
+      const typedTopics: Topic[] = topicsData?.map(topic => ({
+        ...topic,
+        difficulty: topic.difficulty as 'beginner' | 'intermediate' | 'advanced'
+      })) || [];
+
+      setTopics(typedTopics);
 
       // Fetch user progress if logged in
       if (user) {
@@ -93,7 +123,22 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
           throw progressError;
         }
 
-        setUserProgress(progressData || []);
+        // Convert to proper UserProgress type with explicit status field
+        const typedProgress: UserProgress[] = progressData?.map(progress => ({
+          ...progress,
+          status: progress.status as 'not_started' | 'in_progress' | 'completed'
+        })) || [];
+
+        setUserProgress(typedProgress);
+
+        // Generate mock portfolio value based on user progress
+        calculatePortfolioMetrics(typedProgress);
+
+        // Generate mock daily activity data
+        generateDailyActivityData();
+
+        // Generate mock topic popularity history
+        generateTopicPopularityHistory(typedTopics);
       }
     } catch (err) {
       console.error('Error loading topics:', err);
@@ -106,6 +151,61 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Generate mock daily activity data
+  const generateDailyActivityData = () => {
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      return {
+        day: date.toLocaleDateString('en-US', { weekday: 'short' }),
+        value: Math.floor(Math.random() * 500) + 100
+      };
+    });
+    
+    setDailyActivity(last7Days);
+  };
+
+  // Generate mock portfolio metrics
+  const calculatePortfolioMetrics = (progress: UserProgress[]) => {
+    // Calculate value based on progress
+    const baseValue = 1000;
+    const completedBonus = progress.filter(p => p.status === 'completed').length * 200;
+    const inProgressBonus = progress.filter(p => p.status === 'in_progress').length * 50;
+    const percentBonus = progress.reduce((sum, p) => sum + p.percent_complete, 0) * 2;
+    
+    const value = baseValue + completedBonus + inProgressBonus + percentBonus;
+    const change = Math.floor(Math.random() * 200) - 50; // Random change between -50 and 150
+    const changePercent = Math.round((change / (value - change)) * 100 * 10) / 10;
+    
+    setPortfolioValue(value);
+    setPortfolioChange(change);
+    setPortfolioChangePercent(changePercent);
+  };
+
+  // Generate mock topic popularity history
+  const generateTopicPopularityHistory = (topicsList: Topic[]) => {
+    const history: Record<string, PopularityHistoryEntry[]> = {};
+    
+    topicsList.forEach(topic => {
+      const entries: PopularityHistoryEntry[] = [];
+      const basePopularity = topic.popularity - Math.floor(Math.random() * 200);
+      
+      for (let i = 0; i < 10; i++) {
+        const date = new Date();
+        date.setDate(date.getDate() - (10 - i));
+        
+        entries.push({
+          timestamp: date.toISOString(),
+          popularity: Math.max(0, basePopularity + Math.floor(Math.random() * 50) * i)
+        });
+      }
+      
+      history[topic.id] = entries;
+    });
+    
+    setTopicPopularityHistory(history);
   };
 
   // Function to fetch topic sections
@@ -174,7 +274,12 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
         setUserProgress(prevProgress =>
           prevProgress.map(progress =>
             progress.id === existingProgress.id
-              ? { ...progress, ...progressData, last_accessed: new Date().toISOString() }
+              ? { 
+                  ...progress, 
+                  ...progressData, 
+                  status: (progressData.status || progress.status) as 'not_started' | 'in_progress' | 'completed',
+                  last_accessed: new Date().toISOString() 
+                }
               : progress
           )
         );
@@ -183,7 +288,7 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
         const newProgress = {
           user_id: user.id,
           topic_id: progressData.topic_id,
-          status: progressData.status || 'not_started',
+          status: (progressData.status || 'not_started') as 'not_started' | 'in_progress' | 'completed',
           percent_complete: progressData.percent_complete || 0,
           last_accessed: new Date().toISOString(),
           time_spent: progressData.time_spent || 0,
@@ -197,10 +302,16 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
         if (error) throw error;
 
         if (data && data.length > 0) {
-          // Add to state
-          setUserProgress(prev => [...prev, data[0]]);
+          // Add to state with proper typing
+          setUserProgress(prev => [...prev, {
+            ...data[0],
+            status: data[0].status as 'not_started' | 'in_progress' | 'completed'
+          }]);
         }
       }
+
+      // Update portfolio metrics after progress update
+      calculatePortfolioMetrics([...userProgress]);
     } catch (err) {
       console.error('Error updating progress:', err);
       toast({
@@ -226,6 +337,9 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
     fetchTopics();
   }, [user?.id]);
 
+  // Alias fetchTopics to loadTopics for backward compatibility
+  const loadTopics = fetchTopics;
+
   return (
     <LearningContext.Provider
       value={{
@@ -239,6 +353,12 @@ export const LearningProvider = ({ children }: { children: ReactNode }) => {
         updateUserProgress,
         getTopicById,
         getUserProgressForTopic,
+        topicPopularityHistory,
+        portfolioValue,
+        portfolioChange,
+        portfolioChangePercent,
+        dailyActivity,
+        loadTopics,
       }}
     >
       {children}

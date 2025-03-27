@@ -12,7 +12,7 @@ import {
   BellDot,
   LogOut
 } from 'lucide-react';
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis } from 'recharts';
 import { useAuth } from '@/hooks/useAuth';
 import { useLearning } from '@/hooks/useLearning';
 import { Button } from '@/components/ui/button';
@@ -28,22 +28,22 @@ const Dashboard: React.FC = () => {
   const { 
     topics, 
     userProgress, 
-    topicPopularityHistory,
-    portfolioValue, 
-    portfolioChange, 
-    portfolioChangePercent,
-    dailyActivity,
-    loadTopics,
-    isLoading
+    isLoading,
+    fetchTopics, 
+    topicPopularityHistory = {}, // Provide default empty object
+    portfolioValue = 0, // Provide default value
+    portfolioChange = 0, // Provide default value
+    portfolioChangePercent = 0, // Provide default value
+    dailyActivity = [] // Provide default empty array
   } = useLearning();
 
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
     } else {
-      loadTopics();
+      fetchTopics();
     }
-  }, [isAuthenticated, navigate, loadTopics]);
+  }, [isAuthenticated, navigate, fetchTopics]);
 
   const handleLogout = () => {
     logout();
@@ -66,6 +66,10 @@ const Dashboard: React.FC = () => {
   };
 
   const topicCounts = getTopicCounts();
+
+  // Handle portfolioValue being undefined
+  const displayPortfolioValue = typeof portfolioValue === 'number' ? portfolioValue.toLocaleString() : '0';
+  const displayChangePercent = typeof portfolioChangePercent === 'number' ? portfolioChangePercent : 0;
 
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-white">
@@ -112,12 +116,12 @@ const Dashboard: React.FC = () => {
             <h2 className="text-2xl font-semibold text-primary">Learning Portfolio</h2>
             <div className="flex items-center">
               <ChevronUp className="text-primary mr-1" size={16} />
-              <span className="text-primary font-semibold">{portfolioChangePercent}%</span>
+              <span className="text-primary font-semibold">{displayChangePercent}%</span>
             </div>
           </div>
           
           <div className="flex items-baseline mb-4">
-            <h3 className="text-3xl font-bold mr-2">{portfolioValue.toLocaleString()}</h3>
+            <h3 className="text-3xl font-bold mr-2">{displayPortfolioValue}</h3>
             <span className="text-sm text-gray-400">points</span>
           </div>
           
